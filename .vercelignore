@@ -3,3 +3,5 @@ server.mjs
 start-game.bat
 README.md
 package.json
+.env*
+.vercel

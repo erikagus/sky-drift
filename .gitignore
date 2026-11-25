@@ -9,3 +9,6 @@ assets/tree-cluster*.png
 assets/models/cherry-tree.glb
 assets/models/sacred-oak.glb
 assets/models/orchard-peach-tree.glb
+
+.vercel
+.env*
