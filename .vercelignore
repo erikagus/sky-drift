@@ -5,3 +5,8 @@ README.md
 package.json
 .env*
 .vercel
+assets/cloud-*.png
+assets/tree-cluster*.png
+assets/models/cherry-tree.glb
+assets/models/sacred-oak.glb
+assets/models/orchard-peach-tree.glb
