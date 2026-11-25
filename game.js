@@ -978,7 +978,7 @@ function crashPlane() {
     });
   }
   playChime([196, 147]);
-  showToast("Pesawat hancur! Terbang lagi sebentar...");
+  showToast("Plane down! Back in the air shortly...");
 }
 
 function updateCrashDebris(dt) {
