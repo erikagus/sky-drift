@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b2a5e" />
+  <meta name="description" content="Sky Drift: a cozy flight game. Deliver mail parcels by plane over a green valley and a turquoise coast." />
+  <title>Sky Drift — Wind Courier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.min.js",
+        "three/addons/": "./vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="./ui.css" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- ===== IN-GAME HUD ===== -->
+  <div class="hud-top-left">
+    <div class="stat-main">
+      <div class="metric big">
+        <span class="metric-label">MAIL</span>
+        <span class="metric-val" id="hud-mail">0 / 5</span>
+      </div>
+      <div class="divider"></div>
+      <div class="metric">
+        <span class="metric-label">SCORE</span>
+        <span class="metric-val" id="hud-score">0</span>
+      </div>
+      <div class="divider"></div>
+      <div class="metric">
+        <span class="metric-label">COMBO</span>
+        <span class="metric-val" id="hud-combo">x1</span>
+      </div>
+    </div>
+    <div class="stat-sub">
+      <div class="metric">
+        <span class="metric-label">ALT</span>
+        <span class="metric-val" id="hud-alt">145 m</span>
+      </div>
+      <div class="divider"></div>
+      <div class="metric">
+        <span class="metric-label">SPEED</span>
+        <span class="metric-val" id="hud-spd">88 kt</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hud-top-right">
+    <button class="pause-btn" id="btn-pause" type="button" aria-label="Pause">
+      <span class="pause-icon"></span><kbd>Esc</kbd>
+    </button>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="touch-ui">
+    <div id="touch-stick"><div id="touch-knob"></div></div>
+    <div class="touch-actions">
+      <button id="touch-boost" type="button">BOOST</button>
+      <button id="touch-drop" type="button">DROP</button>
+    </div>
+  </div>
+
+  <div id="rotate-hint"><div>Turn your phone sideways to play</div></div>
+
+  <div class="hud-bottom-stack">
+    <div id="drop-hint"></div>
+    <div id="boost-bar-wrap"><div id="boost-fill"></div></div>
+    <div class="hud-bottom">
+      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>&nbsp;Fly</span>
+      <span><kbd>E</kbd>&nbsp;Drop mail</span>
+      <span><kbd>Shift</kbd>&nbsp;Boost</span>
+      <span class="opt"><kbd>C</kbd>&nbsp;Camera</span>
+      <span class="opt"><kbd>F</kbd>&nbsp;Photo</span>
+    </div>
+  </div>
+
+  <div id="photo-bar">
+    <span>Drag to orbit the camera</span>
+    <button class="chip chip-primary" id="btn-snap" type="button">Save Screenshot</button>
+    <button class="chip" id="btn-resume-photo" type="button">Back to Flight <kbd>F</kbd></button>
+  </div>
+
+  <!-- ===== MAIN MENU ===== -->
+  <section class="screen screen-main" data-screen="main">
+    <div class="main-wrap">
+      <div class="logo">
+        <div class="logo-kicker">THE WIND COURIER</div>
+        <h1 class="logo-text"><span>SKY</span><span>DRIFT</span></h1>
+      </div>
+      <nav class="menu-list">
+        <button class="menu-item" data-row="0" data-action="courier" type="button">
+          <span class="mi-label">Courier Run</span><span class="mi-sub">Deliver 5 parcels before dusk</span>
+        </button>
+        <button class="menu-item" data-row="1" data-action="free" type="button">
+          <span class="mi-label">Free Roam</span><span class="mi-sub">Just fly, no rush</span>
+        </button>
+        <button class="menu-item" data-row="2" data-action="hangar" type="button">
+          <span class="mi-label">Hangar</span><span class="mi-sub">Pick your route and plane</span>
+        </button>
+        <button class="menu-item" data-row="3" data-action="howto" type="button">
+          <span class="mi-label">How to Play</span><span class="mi-sub">Controls and the goal, in one page</span>
+        </button>
+        <button class="menu-item" data-row="4" data-action="settings" type="button">
+          <span class="mi-label">Settings</span><span class="mi-sub">Text size, contrast, motion, assist, sound</span>
+        </button>
+      </nav>
+    </div>
+    <div class="screen-foot-bar">
+      <span id="best-score">Best score 0</span>
+      <a class="credits-link" href="./credits.html" target="_blank" rel="noopener">Credits</a>
+      <span class="nav-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Select &nbsp; <kbd>Enter</kbd> Confirm</span>
+    </div>
+  </section>
+
+  <!-- ===== HANGAR ===== -->
+  <section class="screen screen-wide" data-screen="hangar">
+    <header class="screen-head">
+      <button class="back-btn" data-row="9" data-action="back" type="button">&#9664; Back</button>
+      <h2>HANGAR</h2>
+    </header>
+
+    <div class="hangar-body">
+      <h3 class="group-title">ROUTE</h3>
+      <div class="tile-row" id="map-tiles">
+        <button class="tile" data-row="0" data-map="valley" type="button">
+          <span class="tile-name">Emerald Valley</span>
+          <span class="tile-desc">Patchwork meadows, a winding river and stone bridges.</span>
+        </button>
+        <button class="tile" data-row="0" data-map="coast" type="button">
+          <span class="tile-name">Azure Coast</span>
+          <span class="tile-desc">Crystal sea, lush islands and red trawler boats.</span>
+        </button>
+      </div>
+
+      <h3 class="group-title">PLANE</h3>
+      <div class="tile-row" id="plane-tiles"></div>
+    </div>
+
+    <footer class="screen-foot">
+      <button class="menu-item inline primary" data-row="3" data-action="fly" type="button">
+        <span class="mi-label">Fly Courier Run</span>
+      </button>
+    </footer>
+  </section>
+
+  <!-- ===== HOW TO PLAY ===== -->
+  <section class="screen screen-wide" data-screen="howto">
+    <header class="screen-head">
+      <button class="back-btn" data-row="9" data-action="back" type="button">&#9664; Back</button>
+      <h2>HOW TO PLAY</h2>
+    </header>
+    <div class="howto-body">
+      <div class="howto-col">
+        <h3 class="group-title">THE GOAL</h3>
+        <ol class="howto-steps">
+          <li>You are a mail pilot. Fly along the valley or the coast.</li>
+          <li>When a village or island is close, a yellow tip appears at the bottom. Press <kbd>E</kbd> to drop a parcel.</li>
+          <li>Aim so the parcel lands near the glowing ring above the village. Closer is a perfect drop.</li>
+          <li>Deliver 5 parcels to finish the Courier Run. No timer, take your time.</li>
+        </ol>
+        <h3 class="group-title">NICE TO KNOW</h3>
+        <ul class="howto-tips">
+          <li>Fly through golden wind rings to build your combo and fill the boost bar.</li>
+          <li>Skim low over water, or fly under a stone bridge, for extra boost.</li>
+          <li>Crashing into a building breaks your plane. You respawn a moment later and keep your parcels. Turn on Crash protection in Settings if you would rather not crash.</li>
+        </ul>
+      </div>
+      <div class="howto-col">
+        <h3 class="group-title">CONTROLS</h3>
+        <p class="howto-touch">On a phone or tablet: steer with the thumb stick on the left, and use the DROP and BOOST buttons on the right. Turn the phone sideways.</p>
+        <div class="keys-grid">
+          <span><kbd>W</kbd> <kbd>&uarr;</kbd></span><span>Climb</span>
+          <span><kbd>S</kbd> <kbd>&darr;</kbd></span><span>Dive</span>
+          <span><kbd>A</kbd> <kbd>&larr;</kbd></span><span>Turn left</span>
+          <span><kbd>D</kbd> <kbd>&rarr;</kbd></span><span>Turn right</span>
+          <span><kbd>E</kbd></span><span>Drop a parcel</span>
+          <span><kbd>Shift</kbd> <kbd>Space</kbd></span><span>Boost</span>
+          <span><kbd>Esc</kbd></span><span>Pause menu</span>
+          <span><kbd>C</kbd></span><span>Change camera</span>
+          <span><kbd>F</kbd></span><span>Photo mode</span>
+          <span><kbd>H</kbd></span><span>Hide or show the HUD</span>
+          <span><kbd>M</kbd></span><span>Engine sound on or off</span>
+          <span><kbd>B</kbd> <kbd>P</kbd> <kbd>T</kbd></span><span>Switch map, plane, time of day</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SETTINGS ===== -->
+  <section class="screen screen-wide" data-screen="settings">
+    <header class="screen-head">
+      <button class="back-btn" data-row="9" data-action="back" type="button">&#9664; Back</button>
+      <h2>SETTINGS</h2>
+    </header>
+    <div class="settings-list" id="settings-list"></div>
+  </section>
+
+  <!-- ===== PAUSE ===== -->
+  <section class="screen screen-pause" data-screen="pause">
+    <div class="pause-wrap">
+      <h2 class="pause-title">PAUSED</h2>
+      <nav class="menu-list centered">
+        <button class="menu-item" data-row="0" data-action="resume" type="button"><span class="mi-label">Resume</span></button>
+        <button class="menu-item" data-row="1" data-action="photo" type="button"><span class="mi-label">Photo Mode</span></button>
+        <button class="menu-item" data-row="2" data-action="settings" type="button"><span class="mi-label">Settings</span></button>
+        <button class="menu-item" data-row="3" data-action="restart" type="button"><span class="mi-label">Restart Run</span></button>
+        <button class="menu-item" data-row="4" data-action="main" type="button"><span class="mi-label">Main Menu</span></button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- ===== RESULTS ===== -->
+  <section class="screen screen-pause" data-screen="results">
+    <div class="pause-wrap results">
+      <div class="logo-kicker">ROUTE COMPLETE</div>
+      <h2 class="pause-title">Flight Complete!</h2>
+      <p class="results-sub" id="summary-sub">All valley mail parcels safely delivered before nightfall.</p>
+      <div class="results-grid">
+        <div class="res-box big"><div class="sum-lbl">SCORE</div><div class="sum-val" id="sum-score">0</div></div>
+        <div class="res-box"><div class="sum-lbl">PERFECT DROPS</div><div class="sum-val" id="sum-perfect">0</div></div>
+        <div class="res-box"><div class="sum-lbl">BRIDGES</div><div class="sum-val" id="sum-bridges">0</div></div>
+        <div class="res-box"><div class="sum-lbl">MAX COMBO</div><div class="sum-val" id="sum-combo">x1</div></div>
+        <div class="res-box"><div class="sum-lbl">DISTANCE</div><div class="sum-val" id="sum-dist">0.0 km</div></div>
+        <div class="res-box"><div class="sum-lbl">BEST</div><div class="sum-val" id="sum-best">0</div></div>
+      </div>
+      <nav class="menu-list centered">
+        <button class="menu-item" data-row="0" data-action="again" type="button"><span class="mi-label">Fly Again</span></button>
+        <button class="menu-item" data-row="1" data-action="continue" type="button"><span class="mi-label">Keep Flying (Free Roam)</span></button>
+        <button class="menu-item" data-row="2" data-action="main" type="button"><span class="mi-label">Main Menu</span></button>
+      </nav>
+    </div>
+  </section>
+
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

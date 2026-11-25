@@ -1,0 +1,7 @@
+{
+  "name": "sky-drift",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sky Drift: a cozy flight game built with Three.js",
+  "scripts": { "start": "node server.mjs" }
+}

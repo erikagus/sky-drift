@@ -1,0 +1,11 @@
+node_modules/
+.vercel/
+.DS_Store
+*.log
+
+# unused leftovers, not published (provenance unclear / replaced by Blender-made assets)
+assets/cloud-*.png
+assets/tree-cluster*.png
+assets/models/cherry-tree.glb
+assets/models/sacred-oak.glb
+assets/models/orchard-peach-tree.glb
