@@ -412,3 +412,39 @@ body.touch .howto-touch { display: block; }
   .touch-actions #touch-drop { width: 92px; height: 92px; }
 }
 #rotate-hint div { max-width: 82vw; white-space: normal; text-wrap: balance; }
+
+/* ===== Loading screen: plain HTML, visible before the scripts arrive ===== */
+#loader {
+  position: fixed; inset: 0; z-index: 100; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #5fb3ec 0%, #9fd3f2 55%, #ffe3b0 100%);
+  transition: opacity 0.6s ease, visibility 0.6s;
+}
+#loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+.ld-center { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px; }
+.ld-logo {
+  display: flex; gap: 0.3em; font-family: var(--display); font-weight: 700; font-size: clamp(52px, 10vw, 104px);
+  line-height: 1; transform: rotate(-3deg);
+}
+.ld-logo span { color: var(--cream); -webkit-text-stroke: 7px var(--navy); paint-order: stroke fill; text-shadow: 0 7px 0 #09224d; }
+.ld-logo span:last-child { color: var(--accent); }
+.ld-track {
+  position: relative; width: min(360px, 72vw); height: 14px; margin-top: 18px;
+  border-radius: 99px; background: rgba(11, 42, 94, 0.25); border: 2px solid var(--navy);
+}
+.ld-fill { width: 0%; height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.35s ease; }
+.ld-plane { position: absolute; top: -30px; left: 0%; transform: translateX(-50%); transition: left 0.35s ease; animation: ld-bob 1.6s ease-in-out infinite; }
+.ld-text { font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--navy); }
+#ld-pct { opacity: 0.7; margin-left: 6px; }
+.ld-cloud { position: absolute; border-radius: 99px; background: rgba(255, 255, 255, 0.85); filter: blur(1px); animation: ld-drift linear infinite; }
+.ld-cloud::before, .ld-cloud::after { content: ""; position: absolute; border-radius: 50%; background: inherit; }
+.ld-cloud::before { width: 55%; height: 170%; left: 15%; bottom: 20%; }
+.ld-cloud::after { width: 40%; height: 130%; right: 12%; bottom: 25%; }
+.ld-c1 { width: 220px; height: 54px; top: 16%; animation-duration: 38s; animation-delay: -10s; }
+.ld-c2 { width: 160px; height: 40px; top: 70%; animation-duration: 30s; animation-delay: -22s; opacity: 0.8; }
+.ld-c3 { width: 120px; height: 30px; top: 38%; animation-duration: 46s; animation-delay: -4s; opacity: 0.6; }
+@keyframes ld-drift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+@keyframes ld-bob { 50% { margin-top: -5px; } }
+@media (prefers-reduced-motion: reduce) {
+  .ld-cloud, .ld-plane { animation: none; }
+}

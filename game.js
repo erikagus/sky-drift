@@ -10,9 +10,58 @@ import { createTouchControls } from "./touch.js";
 
 // === QUERY PARAMS FOR TESTING / PRESETS ===
 const params = new URLSearchParams(window.location.search);
+// ?record=1: frames are advanced from outside with a fixed time step and a seeded random, so a film of the game is exact
+const RECORD = params.get("record") === "1";
+if (RECORD) {
+  let seed = 20261126;
+  Math.random = () => {                                     // mulberry32
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 const AUTOSTART = params.get("autostart") === "1";
 const PARAM_TIME = params.get("time");
 const PARAM_BIOME = params.get("biome");
+
+// === LOADING SCREEN ===
+// Every model and texture goes through THREE's default loading manager, so its counts drive the bar.
+// When the last one is in, two frames are drawn behind the screen (the shaders compile there), then it fades.
+(() => {
+  const loaderEl = document.getElementById("loader");
+  if (!loaderEl) return;
+  const fill = document.getElementById("ld-fill");
+  const planeIcon = document.getElementById("ld-plane");
+  const pctEl = document.getElementById("ld-pct");
+  const tipEl = document.getElementById("ld-tip");
+  const tips = ["Packing the mail bags…", "Fuelling the plane…", "Painting the sky…", "Growing the trees…", "Waking the villages…"];
+  let shown = 0, finished = false;
+  const show = (p) => {
+    shown = Math.max(shown, Math.min(1, p));
+    const pct = Math.round(shown * 100) + "%";
+    fill.style.width = pct; planeIcon.style.left = pct; pctEl.textContent = pct;
+    tipEl.textContent = tips[Math.min(tips.length - 1, Math.floor(shown * tips.length))];
+  };
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    show(1);
+    tipEl.textContent = "Ready for take-off!";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      loaderEl.classList.add("done");
+      setTimeout(() => loaderEl.remove(), 700);
+    }));
+  };
+  if (RECORD) { loaderEl.remove(); return; }
+  const mgr = THREE.DefaultLoadingManager;
+  let left = 1;                                                                    // items still loading, as the manager last said
+  mgr.onStart = (_url, loaded, total) => { left = total - loaded; };
+  mgr.onProgress = (_url, loaded, total) => { left = total - loaded; show(total ? (loaded / total) * 0.95 : 0); };
+  mgr.onError = () => {};                                                         // a missing model still counts as done
+  mgr.onLoad = () => setTimeout(() => { if (left === 0) finish(); }, 250);        // wait: one batch can start right after another
+  setTimeout(finish, 25000);                                                       // never leave a player stuck on it
+})();
 
 // === DOM ELEMENTS ===
 const appEl = document.getElementById("app");
@@ -1226,9 +1275,10 @@ const camLookSmooth = new THREE.Vector3(0, 32, -22);
 let wakeTimer = 0;
 let lastTime = performance.now();
 
+let fixedDt = null;
 function animate(now) {
-  requestAnimationFrame(animate);
-  const rawDt = Math.min(0.05, (now - lastTime) / 1000);
+  if (!RECORD) requestAnimationFrame(animate);
+  const rawDt = fixedDt ?? Math.min(0.05, (now - lastTime) / 1000);
   lastTime = now;
   const dt = gameState === "PHOTO" || gameState === "SUMMARY" || gameState === "PAUSED" ? 0 : rawDt;
 
@@ -1573,4 +1623,35 @@ function animate(now) {
   composer.render();
 }
 
-requestAnimationFrame(animate);
+if (RECORD) {
+  window.__rec = {
+    ready: () => Boolean(planeEntries[0]) && env.getBiome() !== undefined,
+    // advance one frame of `dt` seconds with these virtual keys held; a key name is a KeyboardEvent.code
+    step(dt, held = [], press = []) {
+      keys.clear();
+      held.forEach((k) => keys.add(k));
+      fixedDt = dt;
+      if (press.includes("KeyE")) dropMailParcel();
+      animate(0);
+    },
+    setup({ biome = "valley", time = "noon", cam = 0, plane = 0, z = 0, x = null, y = null, mode = "free" } = {}) {
+      setActiveBiome(biome, false);
+      const ti = TIME_MODES.findIndex((m) => m.key === time);
+      if (ti !== -1) timeModeIdx = ti;
+      camModeIdx = cam;
+      activatePlane(plane, false);
+      startSession(mode);
+      document.head.insertAdjacentHTML("beforeend", "<style>.hud-top-left,.hud-top-right,.hud-bottom-stack,#toast,#touch-ui{display:none!important}</style>");
+      hudHidden = true;
+      applyHudVisibility();
+      flight.z = z;
+      flight.x = x ?? (biome === "coast" ? 0 : env.riverCenterX(z));
+      flight.y = y ?? flight.y;
+      flight.heading = 0;
+    },
+    state: () => ({ x: flight.x, y: flight.y, z: flight.z, heading: flight.heading, pitch: flight.pitch, roll: flight.roll, speed: flight.speed, deliveries: flight.deliveries, combo: flight.combo, state: gameState, over: env.isOverWater(flight.x, flight.z), river: env.riverCenterX(flight.z), ground: env.terrainHeight(flight.x, flight.z), safe: env.getSafeAltitude(flight.x, flight.z, 4.6), target: (() => { const t = env.getNearestDelivery(planeRoot.position, 64); return t ? { x: t.x, z: t.z, topY: t.topY, name: t.name } : null; })() }),
+    render: () => composer.render(),
+  };
+} else {
+  requestAnimationFrame(animate);
+}

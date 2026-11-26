@@ -20,6 +20,22 @@
   <link rel="stylesheet" href="./ui.css" />
 </head>
 <body>
+  <!-- ===== LOADING SCREEN (shown before any script runs, removed by game.js when the world is ready) ===== -->
+  <div id="loader" role="status" aria-live="polite">
+    <div class="ld-cloud ld-c1"></div><div class="ld-cloud ld-c2"></div><div class="ld-cloud ld-c3"></div>
+    <div class="ld-center">
+      <div class="logo-kicker">THE WIND COURIER</div>
+      <div class="ld-logo"><span>SKY</span><span>DRIFT</span></div>
+      <div class="ld-track">
+        <div class="ld-fill" id="ld-fill"></div>
+        <div class="ld-plane" id="ld-plane" aria-hidden="true">
+          <svg viewBox="0 0 40 24" width="40" height="24"><path d="M2 12 L38 3 L22 21 L18 14 Z" fill="#fff4d6" stroke="#0b2a5e" stroke-width="2" stroke-linejoin="round"/><path d="M18 14 L38 3" stroke="#0b2a5e" stroke-width="1.6"/></svg>
+        </div>
+      </div>
+      <div class="ld-text"><span id="ld-tip">Packing the mail bags…</span> <span id="ld-pct">0%</span></div>
+    </div>
+  </div>
+
   <div id="app"></div>
 
   <!-- ===== IN-GAME HUD ===== -->
